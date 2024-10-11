@@ -16,8 +16,15 @@ export type ConnectionDetails = {
   participantToken: string;
 };
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const roomId = searchParams.get("roomId");
+    console.log(roomId)
+    if (!roomId) {
+      throw new Error("roomId is required");
+    }
+
     // Generate participant token
     const participantIdentity = `voice_assistant_user_${Math.round(
       Math.random() * 10_000
@@ -26,7 +33,7 @@ export async function GET() {
       {
         identity: participantIdentity,
       },
-      "roomName"
+      roomId
     );
 
     if (LIVEKIT_URL === undefined) {
@@ -36,7 +43,7 @@ export async function GET() {
     // Return connection details
     const data: ConnectionDetails = {
       serverUrl: LIVEKIT_URL,
-      roomName: "voice_assistant_room",
+      roomName: roomId,
       participantToken: participantToken,
       participantName: participantIdentity,
     };
@@ -44,7 +51,6 @@ export async function GET() {
   } catch (error) {
     if (error instanceof Error) {
       console.error(error);
-
       return new NextResponse(error.message, { status: 500 });
     }
   }
